@@ -83,7 +83,7 @@ public class ElasticManager {
             }
             scrollId = searchResponse.getScrollId();
             searchHits = searchResponse.getHits().getHits();
-            String[] links = new String[100];
+            String[] links = new String[200];
             int k = 0;
             for(SearchHit hit : searchHits){
                 Map<String, Object> sourceAsMap = hit.getSourceAsMap();
