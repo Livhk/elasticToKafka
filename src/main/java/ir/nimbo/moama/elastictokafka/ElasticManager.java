@@ -29,6 +29,7 @@ public class ElasticManager {
     private SearchRequest searchRequest;
     private SearchSourceBuilder searchSourceBuilder;
     private KafkaManager kafkaManager;
+    private static Logger reportLogger = Logger.getLogger("report");
 
     public ElasticManager() {
         client = new RestHighLevelClient(
@@ -47,7 +48,7 @@ public class ElasticManager {
         SearchRequest searchRequest = new SearchRequest("pages");
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.size(100);
+        searchSourceBuilder.size(200);
         searchSourceBuilder.timeout(new TimeValue(90, TimeUnit.SECONDS));
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         searchRequest.source(searchSourceBuilder);
@@ -58,15 +59,15 @@ public class ElasticManager {
                 searchResponse = client.search(searchRequest);
                 searchStatus = true;
             } catch (IOException e) {
-                System.out.println("Elastic connection timed out! Trying again...");
+                reportLogger.info("Elastic connection timed out! Trying again...");
                 searchStatus = false;
             }
         }
-        System.out.println("Partitioning Done!");
+        reportLogger.info("Partitioning Done!");
         String scrollId = searchResponse.getScrollId();
         SearchHit[] searchHits = searchResponse.getHits().getHits();
         int i = 1, j = 0;
-        while (j < 1000000) {
+        while (j < 14099000) {
             SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
             scrollRequest.scroll(scroll);
             searchStatus = false;
@@ -76,7 +77,7 @@ public class ElasticManager {
                     searchResponse = client.search(searchRequest);
                     searchStatus = true;
                 } catch (IOException e) {
-                    System.out.println("Elastic connection timed out! Trying again...");
+                    reportLogger.info("Elastic connection timed out! Trying again...");
                     searchStatus = false;
                 }
             }
@@ -92,13 +93,12 @@ public class ElasticManager {
                 k++;
             }
             kafkaManager.pushNewURL(links);
-            System.out.println(i);
+            reportLogger.info(i);
             i++;
         }
         Date end = new Date();
-        System.out.println((end.getTime() - begin.getTime()) / 1000);
+        reportLogger.info((end.getTime() - begin.getTime()) / 1000);
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
         clearScrollRequest.addScrollId(scrollId);
-        ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest);
     }
 }
