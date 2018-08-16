@@ -93,11 +93,12 @@ public class ElasticManager {
                 k++;
             }
             kafkaManager.pushNewURL(links);
-            reportLogger.info(i);
+            if(i % 50 == 0){
+                Date now = new Date();
+                reportLogger.info(i + "\t" + (now.getTime() - begin.getTime()) / 1000);
+            }
             i++;
         }
-        Date end = new Date();
-        reportLogger.info((end.getTime() - begin.getTime()) / 1000);
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
         clearScrollRequest.addScrollId(scrollId);
     }
