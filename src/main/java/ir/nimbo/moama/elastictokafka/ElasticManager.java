@@ -38,17 +38,18 @@ public class ElasticManager {
         searchRequest = new SearchRequest(index);
         searchRequest.types("_doc");
         searchSourceBuilder = new SearchSourceBuilder();
-        kafkaManager = new KafkaManager("retrievedTest", "master-node:9092,worker-node:9092");
+        kafkaManager = new KafkaManager("retrieved", "master-node:9092,worker-node:9092");
     }
 
 
-    public void scrollTest() throws IOException {
-        Date begin = new Date();
-        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
+    public void scroll() {
+        Date last = new Date();
+        int size = 200;
+        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(5L));
         SearchRequest searchRequest = new SearchRequest("pages");
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.size(200);
+        searchSourceBuilder.size(size);
         searchSourceBuilder.timeout(new TimeValue(90, TimeUnit.SECONDS));
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         searchRequest.source(searchSourceBuilder);
@@ -83,7 +84,7 @@ public class ElasticManager {
             }
             scrollId = searchResponse.getScrollId();
             searchHits = searchResponse.getHits().getHits();
-            String[] links = new String[200];
+            String[] links = new String[size];
             int k = 0;
             for(SearchHit hit : searchHits){
                 Map<String, Object> sourceAsMap = hit.getSourceAsMap();
@@ -93,9 +94,10 @@ public class ElasticManager {
                 k++;
             }
             kafkaManager.pushNewURL(links);
-            if(i % 50 == 0){
+            if(i % 20 == 0){
                 Date now = new Date();
-                reportLogger.info(i + "\t" + (now.getTime() - begin.getTime()) / 1000);
+                reportLogger.info((i * size) + "\t" + (now.getTime() - last.getTime()) / 1000);
+                last = now;
             }
             i++;
         }
